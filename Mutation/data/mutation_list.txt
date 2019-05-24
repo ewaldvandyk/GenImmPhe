@@ -1,0 +1,5 @@
+hgnc_symbol	mut_name
+PIK3CA	p.E545K
+PIK3CA	p.H1047R
+AKT1	p.E17K
+PTEN	ANY
