@@ -2,7 +2,7 @@ setwd("~/devel/R")
 source("./user_tools/data_split/setup.R")
 source("./user_tools/data_split/split_methods.R")
 
-# Setup input parameters
+# Setup input parameters and load data sources into memory
 data_sources <- setup_data_sources()
 df_list <- load_df_list(data_sources)
 parse_struct <- setup_split(df_list)
