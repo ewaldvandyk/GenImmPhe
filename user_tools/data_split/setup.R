@@ -28,10 +28,13 @@ setup_data_sources <- function(){
                    TRUE,
                    TRUE), stringsAsFactors = FALSE)
   
-  output_dir <- "~/temp/wild_types"
+  output_dir <- "/Volumes/Ewald/antoinette/TCGA/lumA_pten_loss"
   output_data_sources <- select_output_sources(input_data_sources = input_data_sources, 
                                                source_name_subset = 
-                                                 c("RNASEQ",
+                                                 c("MOLECULAR_SUBTYPES", 
+                                                   "MUTATIONS", 
+                                                   "CNAS", 
+                                                   "RNASEQ",
                                                    "RPPA"),
                                                output_file_type = ".tsv")
  
@@ -51,19 +54,27 @@ setup_split <-function(df_list){
   paramList$SUBTYPE       <- set_param(df_list = df_list, source_name = "MOLECULAR_SUBTYPES", 
                                        id_colname = "molecular_subtype", id = "pam50", 
                                        data_type = "character")
+  paramList$LUMA          <- set_param(df_list = df_list, source_name = "MOLECULAR_SUBTYPES",
+                                       id_colname = "molecular_subtype", id = "LumA",
+                                       data_type = "numeric")
   paramList$PIK3CA_E545K  <- set_param(df_list = df_list, source_name = "MUTATIONS", 
                                        id_colname = "mutation_names", id = "PIK3CA_p.E545K", 
                                        data_type = "numeric")
   paramList$PIK3CA_H1047R <- set_param(df_list = df_list, source_name = "MUTATIONS",
                                           id_colname = "mutation_names", id = "PIK3CA_p.H1047R", 
                                           data_type = "numeric")
+  paramList$PIK3CA_nonsilent  <- set_param(df_list = df_list, source_name = "MUTATIONS", 
+                                       id_colname = "mutation_names", id = "PIK3CA_nonsilent", 
+                                       data_type = "numeric")
   paramList$AKT1_E17K     <- set_param(df_list = df_list, source_name = "MUTATIONS",
                                        id_colname = "mutation_names", id = "AKT1_p.E17K", 
                                        data_type = "numeric")
-  paramList$PTEN_MUT      <- set_param(df_list = df_list, source_name = "MUTATIONS",
-                                       id_colname = "mutation_names", id = "PTEN_ANY", 
+  paramList$AKT1_nonsilent  <- set_param(df_list = df_list, source_name = "MUTATIONS", 
+                                           id_colname = "mutation_names", id = "AKT1_nonsilent", 
+                                           data_type = "numeric")
+  paramList$PTEN_nonsilent <- set_param(df_list = df_list, source_name = "MUTATIONS",
+                                       id_colname = "mutation_names", id = "PTEN_nonsilent", 
                                        data_type = "numeric")
- 
   paramList$PTEN_CNA      <- set_param(df_list = df_list, source_name = "CNAS",
                                        id_colname = "hgnc_symbol", id = "PTEN",
                                        data_type = "numeric")
@@ -84,11 +95,27 @@ setup_split <-function(df_list){
   # <X> && <Y>  : <X> AND <Y> - Both <X> and <Y> have to be true
   # <X> || <Y>  : <X>  OR <Y> - Either <X> or <Y> or both have to be true
   
-  #split_condition <- "SUBTYPE == 'LumA' && PIK3CA_E545K == 1 && (PTEN_MUT == 1 || PTEN_CNA <= -0.25)"
-  split_condition <- "SUBTYPE == 'LumA' && PIK3CA_E545K == 0 && PIK3CA_H1047R == 0 && AKT1_E17K == 0 && PTEN_MUT == 0 && PTEN_CNA > -0.25"
-  #split_condition <- "TRUE"
+  ##############  Set split condition ##############
+  split <- list()
+  # Example 1: choose all samples
+  split$all <- "TRUE"
+  # Example 2: choose all Luminal A samples
+  split$lumA <- "LUMA >= 0.5"
+  # Example 3: Choose all lumninal A samples that are wild type in PIK3CA, AKT1 and PTEN
+  split$lumA_pik_akt_pten_WT <- "LUMA >= 0.5 && PIK3CA_nonsilent == 0 && AKT1_nonsilent == 0 && PTEN_nonsilent == 0 && PTEN_CNA > -0.25"
+  # Example 4: Choose all luminal A samples with different specific mutations
+  split$lumA_pik3_E545K <- "LUMA >= 0.5 && PIK3CA_E545K == 1"
+  split$lumA_pik3_H1047R <- "LUMA >= 0.5 && PIK3CA_H1047R == 1"
+  split$lumA_akt1_E17K <- "LUMA >= 0.5 && AKT1_E17K == 1"
+  split$lumA_pten_nonsilent <- "LUMA >= 0.5 && PTEN_nonsilent == 1"
+  # Example 5: Choose all luminal A samples with copy number loss in PTEN
+  split$lumA_pten_loss <- "LUMA >= 0.5 && PTEN_CNA <= -0.25"
+  
   
   ##############  Set logical expression   ##############
+  split_condition <- split$lumA_pten_loss
+  
+  ##############  Return parse structure   ##############
   parseStruct <- list(params = paramList, parsePhrase = split_condition)
   return(parseStruct)
 }

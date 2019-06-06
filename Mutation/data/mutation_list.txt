@@ -1,5 +1,7 @@
 hgnc_symbol	mut_name
 PIK3CA	p.E545K
 PIK3CA	p.H1047R
+PIK3CA	nonsilent
 AKT1	p.E17K
-PTEN	ANY
+AKT1	nonsilent
+PTEN	nonsilent
