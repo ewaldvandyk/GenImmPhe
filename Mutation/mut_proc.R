@@ -7,7 +7,7 @@ library(Biostrings)
 #   X - Could be any aminc acid
 #   B - Could be N or D
 #   Z - Could be Q or E
-#   J - Coulbe be L or I
+#   J - Could be L or I
 
 muts_2_binaryMatrix <- function(mutDF, metaFields = 1, hgncField = 1, mut_filt){
   # filtMuts should be a data.frame with $hgnc_symbol and $mut_name fields
@@ -58,19 +58,6 @@ muts_2_binaryMatrix <- function(mutDF, metaFields = 1, hgncField = 1, mut_filt){
     }
   }
   
-  # for (muti in seq_along(mut_filt$hgnc_symbol)){
-  #   geneI <- !is.na(match(mutDF$hgnc_symbol, mut_filt$hgnc_symbol[muti]))
-  #   for (sampi in seq_along(sampNames)){
-  #     currMuts <- mutDF[[sampNames[sampi]]]
-  #     if (mut_filt$mut_name[muti] == "ANY"){
-  #       nameI <- !is.na(currMuts) & currMuts != ""
-  #     } else {
-  #       nameI <- grepl(x = currMuts, pattern = mut_filt$mut_name[muti], fixed = TRUE)
-  #     }
-  #     mutI <- geneI & nameI
-  #     mutBinMat[mut_strs[muti], sampNames[sampi]] <- sum(mutI)
-  #   }
-  # }
   mutBinDF <- data.frame(mutation_names = mut_strs, mutBinMat, stringsAsFactors = FALSE)
   rownames(mutBinDF) <- NULL
   

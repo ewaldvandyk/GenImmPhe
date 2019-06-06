@@ -1,4 +1,4 @@
-setwd("~/devel/R")
+setwd("~/devel/R/GenImmPhe")
 source("./user_tools/data_split/setup.R")
 source("./user_tools/data_split/split_methods.R")
 
