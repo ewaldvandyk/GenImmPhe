@@ -3,6 +3,59 @@ source("./utility/data_transform.R")
 
 genHeatMap <- function(df, rownameField = NULL, dataFields = NULL,
                        colPallet = gen3ColPallet(nCol = 1024, satLeft = 0.45, satRight = 0.55),
+                       colSideAnn = NULL, 
+                       maxRowSizeToLabel = 40, maxColSizeToLabel = 40){
+  
+  numRows <- nrow(df)
+  if (is.null(dataFields)){
+    dataFields <- colnames(df)[get_df_numeric_colI(df)]
+  }
+  if (is.null(rownameField)){
+    rowNames <- sprintf("%d", 1:numRows)
+  } else {
+    rowNames <- df[[rownameField]]
+  }
+  # print(rowNames)
+  
+  dataMat <- data.matrix(df[,dataFields])
+  rownames(dataMat) <- rowNames
+  
+  nrows <- dim(dataMat)[1]
+  ncols <- dim(dataMat)[2]
+  if (nrows <= maxRowSizeToLabel){
+    labRow <- rownames(dataMat)
+  }else{
+    labRow <- NA
+  }
+  if (ncols <= maxColSizeToLabel){
+    labCol <- colnames(dataMat)
+  }else{
+    labCol <- NA
+  }
+  
+  # str(colSideAnn)
+  # str(dataMat)
+  if (is.null(colSideAnn)){
+   clustRes <- heatmap3(x = dataMat,
+             balanceColor = TRUE, showColDendro = TRUE,
+             showRowDendro = TRUE, col=colPallet, labRow = labRow, labCol = labCol, 
+             na.rm = TRUE)
+    
+  } else {
+    clustRes <- heatmap3(x = dataMat, 
+             showColDendro = TRUE, showRowDendro = TRUE, 
+             labRow = labRow, labCol = labCol,
+             balanceColor = TRUE, col=colPallet, 
+             ColSideAnn = colSideAnn, ColSideFun = showColSideCols, ColSideWidth = getColSideColStripLength(colSideAnn),
+             na.rm = TRUE)
+    
+  }
+  
+  return(clustRes)
+}
+
+genHeatMapOld <- function(df, rownameField = NULL, dataFields = NULL,
+                       colPallet = gen3ColPallet(nCol = 1024, satLeft = 0.45, satRight = 0.55),
                        colSideColors = NULL, 
                        maxRowSizeToLabel = 40, maxColSizeToLabel = 40){
   
@@ -38,7 +91,6 @@ genHeatMap <- function(df, rownameField = NULL, dataFields = NULL,
              showRowDendro = TRUE, col=colPallet, labRow = labRow, labCol = labCol)
     
   } else {
-    # colSideColors <- create_binary_sideColors(binaryDF = colSideBinDF, orderColList = colnames(dataMat))
     heatmap3(x = dataMat,
              balanceColor = TRUE, showColDendro = TRUE,
              showRowDendro = TRUE, col=colPallet, ColSideColors = colSideColors, 
@@ -50,9 +102,7 @@ genHeatMap <- function(df, rownameField = NULL, dataFields = NULL,
   return(dataMat)
 }
 
-
-
-gen3ColPallet <- function(nCol = 1024, lowCol = "green", midColor = "black", highColor = "red", satLeft = 0, satRight = 1){
+gen3ColPallet <- function(nCol = 1024, lowCol = "navy", midColor = "white", highColor = "firebrick3", satLeft = 0, satRight = 1){
   interpStart <- round(satLeft*nCol)+1
   interpEnd <- round(satRight*nCol)
   nInterp <- interpEnd - interpStart + 1
@@ -61,55 +111,16 @@ gen3ColPallet <- function(nCol = 1024, lowCol = "green", midColor = "black", hig
   return(colPallet)
 }
 
-
-create_binary_sideColors <- function(binaryDF, nonDataCols = 1,rowNameCol = 1, orderColList = NULL, 
-                                     true_color = "red", false_color = "black", na_color = "gray"){
-  
-  # colNames <- colnames(binaryDF)
-  # numRow <- nrow(binaryDF)
-  # if (is.null(orderColList)){
-  #   numCol <- ncol(binaryDF)
-  #   I <- 1:numCol
-  # } else {
-  #   missingCols <- setdiff(orderColList, colNames)
-  #   for (newCol in missingCols){
-  #     binaryDF[[newCol]] <- rep(2, numRow) # Use "2" to represent NA
-  #   }
-  #   colNames <- colnames(binaryDF)
-  #   I <- c(1,match(orderColList, colNames))
-  # }
-  # binaryDF <- binaryDF[,I]
-  rowNames <- binaryDF[[rowNameCol]]
-  binaryDF <- binaryDF[,-nonDataCols]
-  binaryDF <- order_df_cols(df = binaryDF, orderColVec = orderColList)
-  colNames <- colnames(binaryDF)
-  numRows <- length(rowNames)
-  numCols <- length(colNames)
-  sideColors <- matrix(data = na_color, nrow = numRows, ncol = numCols)
-  rownames(sideColors) <- rowNames
-  colnames(sideColors) <- colNames
-  for (i in 1:numCols){
-    currColBool <- binaryDF[[i]] == 1
-    sideColors[currColBool,i] <- true_color
-    currColBool <- binaryDF[[i]] == 0
-    sideColors[currColBool,i] <- false_color
-  }
-  sideColors <- t(sideColors)
-  
-  return(sideColors)
+lgl2Color <- function(lglVec, true_color = "red", false_color = "black", na_color = "grey"){
+  vecLen <- length(lglVec)
+  colVec <- rep(na_color, vecLen)
+  colVec[lglVec] <- true_color
+  colVec[!lglVec] <- false_color
+  return(colVec)
 }
 
-create_cont_sideColors <- function(contDF, nonDataCols = 1, rowNameCol = 1, orderColList = NULL, 
-                                   low_col = "green", neut_col = "black", high_col = "red", na_color = "gray", 
-                                   neut_level = 0, saturate_low = -1, saturate_high = +1){
-  # Allign columns
-  rowNames <- contDF[[rowNameCol]]
-  contDF <- contDF[,-nonDataCols]
-  contDF <- order_df_cols(df = contDF, orderColVec = orderColList)
-  colNames <- colnames(contDF)
-  numRows <- length(rowNames)
-  numCols <- length(colNames)
-  
+num2Color <- function(numVec, low_col = "green", neut_col = "black", high_col = "red", na_color = "grey", 
+                    neut_level = 0, saturate_low = -1, saturate_high = +1){
   # Map colors
   nColors <- 1025
   colScale <- gen3ColPallet(nCol = nColors, lowCol = low_col, midColor = neut_col, highColor = high_col, 
@@ -117,47 +128,143 @@ create_cont_sideColors <- function(contDF, nonDataCols = 1, rowNameCol = 1, orde
   na_code <- colorRampPalette(na_color)(1)
   colScale <- c(colScale, na_code)
   
-  valueMat <- data.matrix(contDF)
-  valiMat <- matrix(data = 0, nrow = numRows, ncol = numCols)
-  naI <- is.na(valueMat)
-  lowI <- !is.na(valueMat) & valueMat <= neut_level
-  satLowI <- !is.na(valueMat) & valueMat < saturate_low
-  higI <- !is.na(valueMat) & valueMat > neut_level
-  satHighI <- !is.na(valueMat) & valueMat > saturate_high
-
-  valiMat[lowI] <- (valueMat[lowI] - saturate_low) / (neut_level - saturate_low) * (nColors-1)/2 + 1
-  valiMat[higI] <- (valueMat[higI] - neut_level) / (saturate_high - neut_level) * (nColors-1)/2 + (nColors-1)/2 + 1
-  valiMat[satLowI] <- 1
-  valiMat[satHighI] <- nColors
-  valiMat[naI] <- nColors+1
-  valiMat <- round(valiMat)
+  naI <- is.na(numVec)
+  lowI <- !is.na(numVec) & numVec <= neut_level
+  satLowI <- !is.na(numVec) & numVec < saturate_low
+  higI <- !is.na(numVec) & numVec > neut_level
+  satHighI <- !is.na(numVec) & numVec > saturate_high
   
-  sideColors <- colScale[valiMat]
-  dim(sideColors) <- dim(valiMat)
-  rownames(sideColors) <- rowNames
-  colnames(sideColors) <- colNames
+  valiVec <- rep(0, length(numVec))
+  valiVec[lowI] <- (numVec[lowI] - saturate_low) / (neut_level - saturate_low) * (nColors-1)/2 + 1
+  valiVec[higI] <- (numVec[higI] - neut_level) / (saturate_high - neut_level) * (nColors-1)/2 + (nColors-1)/2 + 1
+  valiVec[satLowI] <- 1
+  valiVec[satHighI] <- nColors
+  valiVec[naI] <- nColors+1
+  valiVec <- round(valiVec)
   
-  sideColors <- t(sideColors)
-  return(sideColors)
-  
+  colVec <- colScale[valiVec]
 }
 
+fac2Color <- function(facVec, brewer_pal = "Set1", na_color = "grey"){
+  require(RColorBrewer)
+  fac_levels <- levels(facVec)
+  numLevels <- length(fac_levels)
+  
+  tryCatch(
+    warning = function(cnd){
+      stop("Number of factor levels exceeds the chosen pallet size", call. = FALSE)
+    },
+    pal <- brewer.pal(n = max(3, numLevels), name = brewer_pal)
+  )
+
+  colVec <- pal[facVec]
+  colVec[is.na(colVec)] <- na_color
+  names(pal) <- fac_levels
+  return(list(colorVec = colVec, levelColors = pal))
+}
+
+showColSideCols <- function(annData){
+  require(purrr)
+  fieldTypes <- map_chr(.x = annData, .f = class)
+  lglI <- fieldTypes == "logical"
+  numI <- fieldTypes == "numeric"
+  facI <- fieldTypes == "factor"
+  
+  dataLgl <- annData[,lglI, drop = FALSE]
+  dataNum <- annData[,numI, drop = FALSE]
+  dataFac <- annData[,facI, drop = FALSE]
+  
+  binWidth <- 1/nrow(annData)
+  halfBinWidth <- binWidth/2
+  LeftBound <- -halfBinWidth
+  RightBound <- 1 + halfBinWidth 
+  
+  numLines <- ncol(dataLgl) + ncol(dataNum) + 2*ncol(dataFac)
+  plot(c(LeftBound, RightBound), c(0, numLines), 
+       type = "n", xaxt = "n", yaxt = "n", xlab = "", 
+       ylab = "", bty = "n", axes = FALSE, xaxs = "i")
+  lines(x = c(LeftBound, LeftBound, RightBound, RightBound, LeftBound), 
+        y = c(0, numLines, numLines, 0, 0))
+  
+  xleft <- seq(from = LeftBound, to = 1-halfBinWidth, length.out = nrow(annData))
+  xright <- xleft + binWidth
+  
+  offset <- 0
+  if (ncol(dataLgl) != 0){
+    mtext(side = 2, at = seq_along(dataLgl) + offset - 0.5, 
+          text = sprintf("%s ", colnames(dataLgl)), las = 1)
+    for (lglVec in dataLgl){
+      colorVec <- lgl2Color(lglVec)
+      
+      rect(xleft = xleft, xright = xright, ybottom = offset, ytop = offset+1, col = colorVec, border = colorVec)
+      lines(x = c(LeftBound, RightBound), y = c(offset+1, offset+1))
+      offset <- offset+1
+    }
+  }
+  
+  if (ncol(dataNum) != 0){
+    mtext(side = 2, at = seq_along(dataNum) + offset - 0.5,
+          text = sprintf("%s ", colnames(dataNum)), las = 1)
+    for (numVec in dataNum){
+      colorVec <- num2Color(numVec)
+      rect(xleft = xleft, xright = xright, ybottom = offset, ytop = offset+1, col = colorVec, border = colorVec)
+      lines(x = c(LeftBound, RightBound), y = c(offset+1, offset+1))
+      offset <- offset + 1
+    }
+  }
+  
+  legLeft <- 1/20
+  legColFrac <- 0.5
+  legColHight <- 0.5
+  legxBias <- -0.1*legLeft
+  legyBias <- -0.1
+  
+  legColWidth <- legLeft*legColFrac
+  legLeftWidth <- legLeft - legColWidth
+  legColHightRes <- (1 - legColHight)/2
+  
+  if (ncol(dataFac) != 0){
+    mtext(side = 2, at = 2*seq_along(dataFac) + offset - 1,
+          text = sprintf("%s ", colnames(dataFac)), las = 1)
+    for (facVec in dataFac){
+      pal_info <- fac2Color(facVec)
+      colorVec <- pal_info$colorVec
+      legColVec <- pal_info$levelColors
+      rect(xleft = xleft, xright = xright, ybottom = offset, ytop = offset+1, col = colorVec, border = colorVec)
+      levelNames <- levels(facVec)
+      numLevels <- length(levelNames)
+      FacWidth <- 1.0 / numLevels
+      xLegTextPos <- (seq_along(levelNames)-1)*FacWidth + legColWidth +legLeftWidth
+      yLegTextPos <- rep(x = offset + 1.5, times = numLevels)
+      xLegLeft <- xLegTextPos - legColWidth + legxBias
+      xLegRight <- xLegTextPos + legxBias
+      yLegBottom <- yLegTextPos - legColHightRes + legyBias
+      yLegTop <- yLegTextPos + legColHightRes + legyBias
+      text(x = xLegTextPos, y = yLegTextPos, labels = levelNames, adj = 0)
+      rect(xleft = xLegLeft, xright = xLegRight, ybottom = yLegBottom, ytop = yLegTop, col = legColVec, border = NA)
+      
+      lines(x = c(LeftBound, RightBound), y = c(offset+2, offset+2))
+      offset <- offset + 2
+    }
+  }
+  
+  # offset <- numLines
+  return(c(0.0, offset))
+}
+
+getColSideColStripLength <- function(annData){
+  lenMult <- 0.2
+  
+  require(purrr)
+  fieldTypes <- map_chr(.x = annData, .f = class)
+  lglI <- fieldTypes == "logical"
+  numI <- fieldTypes == "numeric"
+  facI <- fieldTypes == "factor"
+  numLines <- sum(lglI) + sum(numI) + 2*sum(facI)
+  lenMult*numLines
+}
 
 # Generic non-core functions
-showCols <- function(cl=colors(), bg = "grey",
-                     cex = 0.75, rot = 30) {
-  # Generic function to show the different types of colors available in R
-  
-  m <- ceiling(sqrt(n <-length(cl)))
-  length(cl) <- m*m; cm <- matrix(cl, m)
-  require("grid")
-  grid.newpage(); vp <- viewport(w = .92, h = .92)
-  grid.rect(gp=gpar(fill=bg))
-  grid.text(cm, x = col(cm)/m, y = rev(row(cm))/m, rot = rot,
-            vp=vp, gp=gpar(cex = cex, col = cm))
-}
-
-
 test_heatmap_complex <- function(dataList){
   heatmap3(x = dataList$rnormData,
            ColSideColors=dataList$ColSideColors,
@@ -166,10 +273,9 @@ test_heatmap_complex <- function(dataList){
            highlightCell=dataList$highlightCell)
   
   result<-heatmap3(x = dataList$rnormData,
-                   ColSideCut=1.2,
                    ColSideAnn=dataList$ColSideAnn,
-                   ColSideFun=function(x)showAnn(x),
-                   ColSideWidth=0.8,
+                   ColSideFun=function(x)showColSideCols(x),
+                   ColSideWidth=getColSideColStripLength(dataList$ColSideAnn),
                    RowSideColors=dataList$RowSideColors,
                    col=colorRampPalette(c("green","black", "red"))(1024),
                    RowAxisColors=1,
