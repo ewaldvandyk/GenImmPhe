@@ -1,6 +1,7 @@
-source("./utility/io_evd.R")
-source("./utility/plot_scripts.R")
-source("./data_integration/df_processing.R")
+genImmPhe_path <- getwd()
+source(file.path(genImmPhe_path, "utility/io_evd.R"), local = TRUE)
+source(file.path(genImmPhe_path, "utility/plot_scripts.R"), local = TRUE)
+source(file.path(genImmPhe_path, "data_integration/df_processing.R"), local = TRUE)
 
 load_df_list <- function(data_sources){
   require(purrr)

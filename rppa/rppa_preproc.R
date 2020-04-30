@@ -1,4 +1,5 @@
-source("./utility/io_evd.R")
+genImmPhe_path <- getwd()
+source(file.path(genImmPhe_path, "utility/io_evd.R"), local = TRUE)
 source("./utility/tcga_proc.R")
 
 rppa_tcga_firebrowse_2_df <- function(inFile, sampType = "Primary Solid Tumor"){

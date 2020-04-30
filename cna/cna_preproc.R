@@ -1,5 +1,6 @@
-source("./utility/io_evd.R")
-source("./utility/tcga_proc.R")
+genImmPhe_path <- getwd()
+source(file.path(genImmPhe_path, "utility/io_evd.R"), local = TRUE)
+source(file.path(genImmPhe_path, "utility/tcga_proc.R"), local = TRUE)
 
 tcga_cnaSeg_2_geneCN <- function(segFile, gene_names, build = NULL){
   delThresh <- -0.25

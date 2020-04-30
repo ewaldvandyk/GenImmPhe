@@ -1,5 +1,6 @@
-source("./data_integration/df_processing.R", local = TRUE)
-source("./utility/io_evd.R", local = TRUE)
+genImmPhe_path <- getwd()
+source(file.path(genImmPhe_path, "data_integration/df_processing.R"), local = TRUE)
+source(file.path(genImmPhe_path, "utility/io_evd.R"), local = TRUE)
 
 load_df_list <- function(data_sources){
   numInSources <- nrow(data_sources$input_data_sources)
@@ -9,21 +10,21 @@ load_df_list <- function(data_sources){
     currDFname <- load(file.path(data_sources$input_dir, data_sources$input_data_sources$file_names[dfi]))
     df_list[[data_sources$input_data_sources$source_names[dfi]]] <- get(currDFname)
     rm(currDFname)
-    curr_non_data_fields <- strsplit(gsub(pattern = " ", 
-                                          replacement = "", 
-                                          x = data_sources$input_data_sources$field_ids[dfi], 
-                                          fixed = TRUE), 
-                                     split = "|", 
+    curr_non_data_fields <- strsplit(gsub(pattern = " ",
+                                          replacement = "",
+                                          x = data_sources$input_data_sources$field_ids[dfi],
+                                          fixed = TRUE),
+                                     split = "|",
                                      fixed = TRUE)[[1]]
     non_data_fields <- c(non_data_fields, curr_non_data_fields)
   }
   non_data_fields <- unique(non_data_fields)
   nais <- which(data_sources$input_data_sources$NAs_allowed)
-  df_list <- allignDFs(df_list = df_list, 
-                       nonDataFieldNames = non_data_fields, 
+  df_list <- allignDFs(df_list = df_list,
+                       nonDataFieldNames = non_data_fields,
                        NAsAllowed = nais)
-  
-  
+
+
   return(df_list)
 }
 
@@ -41,23 +42,46 @@ save_df_list <- function(df_list, data_sources, parse_struct){
   close(fileConn)
 }
 
+get_field_ids <- function(df_list, data_sources, source_name){
+  I <- !is.na(match(data_sources$input_data_sources$source_names, source_name))
+  if (sum(I) != 1){
+    stop("source_name not in df_list")
+  }
+  curr_non_data_fields <- strsplit(gsub(pattern = " ",
+                                        replacement = "",
+                                        x = data_sources$input_data_sources$field_ids[I],
+                                        fixed = TRUE),
+                                   split = "|",
+                                   fixed = TRUE)[[1]]
+}
+
+get_field_idI <- function(df_list, data_sources, source_name){
+  field_ids <- get_field_ids(df_list, data_sources, source_name)
+  return(!is.na(match(names(df_list[[source_name]]), field_ids)))
+}
+
+get_field_idi <- function(df_list, data_sources, source_name){
+  field_idI <- get_field_idI(df_list, data_sources, source_name)
+  return(which(field_idI))
+}
+
 get_df_list_stats_string <- function(df_list, data_sources, parse_struct){
- 
+
   sourceNames <- data_sources$output_data_sources$source_names
   numSources <- length(sourceNames)
-  
-  
+
+
   strings <- "Parse_structure:"
   strings <- c(strings, capture.output(print(parse_struct)))
   strings <- c(strings, rep("", 2))
   strings <- c(strings, "Data sources: ")
   strings <- c(strings, capture.output(print(data_sources$output_data_sources)))
   for (dfi in 1:numSources){
-    non_data_fields <- strsplit(gsub(pattern = " ", 
-                                     replacement = "", 
-                                     x = data_sources$output_data_sources$field_ids[dfi], 
-                                     fixed = TRUE), 
-                                split = "|", 
+    non_data_fields <- strsplit(gsub(pattern = " ",
+                                     replacement = "",
+                                     x = data_sources$output_data_sources$field_ids[dfi],
+                                     fixed = TRUE),
+                                split = "|",
                                 fixed = TRUE)[[1]]
     sampNames <- setdiff(colnames(df_list[[sourceNames[dfi]]]), non_data_fields)
     strings <- c(strings, sprintf("%s:", sourceNames[dfi]))
@@ -67,22 +91,80 @@ get_df_list_stats_string <- function(df_list, data_sources, parse_struct){
   return(strings)
 }
 
-get_split_samps <- function(df_list, parseStruct, data_sources){
-  numSources <- length(df_list)
-  if (numSources == 0){
-    return(df_list)
+sampNames2factor <- function(df_list, sampNameList, defaultCategoryName = "UNKNOWN"){
+  
+  is_pairwise_disjoint <- function(sampNameList){
+    n <- length(sampNameList)
+    combMat <- combn(n, 2)
+    nTests <- ncol(combMat)
+    for (i in seq(length.out = nTests)){
+      jointSamps <- intersect(sampNameList[[combMat[1,i]]], sampNameList[[combMat[2,i]]])
+      if (!is_empty(jointSamps)) {
+        return(FALSE)
+      }
+    }
+    return(TRUE)
   }
   
-  curr_non_data_fields <- strsplit(gsub(pattern = " ", 
-                                        replacement = "", 
-                                        x = data_sources$input_data_sources$field_ids[1], 
-                                        fixed = TRUE), 
-                                   split = "|", 
+  if (!is_pairwise_disjoint(sampNameList)){
+    stop("sampNameList must be pairwise disjoint")
+  }
+  curr_non_data_fields <- strsplit(gsub(pattern = " ",
+                                        replacement = "",
+                                        x = data_sources$input_data_sources$field_ids[1],
+                                        fixed = TRUE),
+                                   split = "|",
+                                   fixed = TRUE)[[1]]
+  samp_names <- setdiff(colnames(df_list[[1]]), curr_non_data_fields)
+  sampFactors <- rep(defaultCategoryName, length(samp_names))
+  for (factorName in names(sampNameList)){
+    sampFactors[!is.na(match(samp_names, sampNameList[[factorName]]))] <- factorName
+  }
+  return(factor(sampFactors))
+  
+}
+
+extract_factor <- function(df_list, param, data_sources){
+  numSources <- length(df_list)
+  if (numSources == 0){
+    return(c())
+  }
+  curr_non_data_fields <- strsplit(gsub(pattern = " ",
+                                        replacement = "",
+                                        x = data_sources$input_data_sources$field_ids[1],
+                                        fixed = TRUE),
+                                   split = "|",
+                                   fixed = TRUE)[[1]]
+  samp_names <- setdiff(colnames(df_list[[1]]), curr_non_data_fields)
+  
+  splitLvl1 <- strsplit(x = param, split = "[", fixed = TRUE)[[1]]
+  sourceID <- splitLvl1[1]
+  rowi <- as.double(strsplit(x = splitLvl1[2], split = "]", fixed = TRUE)[[1]])
+  # print(sprintf("%s: %d", sourceID, rowi))
+  factorCol <- factor(t(df_list[[sourceID]][rowi, samp_names]))
+  names(factorCol) <- samp_names
+  # print(factorCol)
+  
+  
+  return(factorCol)
+}
+
+get_split_sampNames <- function(df_list, parseStruct, data_sources){
+  numSources <- length(df_list)
+  if (numSources == 0){
+    return(c())
+  }
+
+  curr_non_data_fields <- strsplit(gsub(pattern = " ",
+                                        replacement = "",
+                                        x = data_sources$input_data_sources$field_ids[1],
+                                        fixed = TRUE),
+                                   split = "|",
                                    fixed = TRUE)[[1]]
   samp_names <- setdiff(colnames(df_list[[1]]), curr_non_data_fields)
   source_names <- names(df_list)
   parse_phrase <- parse_struct_resolve(parse_struct = parseStruct)
-  
+
   samps_ignore <- c()
   for (samp in samp_names){
     for (dfi in 1:numSources){
@@ -93,14 +175,53 @@ get_split_samps <- function(df_list, parseStruct, data_sources){
       samps_ignore <- c(samps_ignore, samp)
     }
   }
-  
+
+  sampNames <- setdiff(samp_names, samps_ignore)
+
+  return(sampNames)
+}
+
+get_split_samps <- function(df_list, parseStruct, data_sources){
+  numSources <- length(df_list)
+  if (numSources == 0){
+    return(df_list)
+  }
+
+  curr_non_data_fields <- strsplit(gsub(pattern = " ",
+                                        replacement = "",
+                                        x = data_sources$input_data_sources$field_ids[1],
+                                        fixed = TRUE),
+                                   split = "|",
+                                   fixed = TRUE)[[1]]
+  samp_names <- setdiff(colnames(df_list[[1]]), curr_non_data_fields)
+  source_names <- names(df_list)
+  parse_phrase <- parse_struct_resolve(parse_struct = parseStruct)
+
+  samps_ignore <- c()
+  for (samp in samp_names){
+    for (dfi in 1:numSources){
+      assign(x = source_names[dfi], df_list[[dfi]][[samp]])
+    }
+    sampValid <- eval(parse(text = parse_phrase))
+    if (is.na(sampValid) || !sampValid){
+      samps_ignore <- c(samps_ignore, samp)
+    }
+  }
+
   for (dfi in 1:numSources){
     colNames <- colnames(df_list[[dfi]])
     keepI <- is.na(match(colNames, samps_ignore))
     df_list[[dfi]] <- df_list[[dfi]][,keepI]
   }
-  
+
   return(df_list)
+}
+
+get_parse_struct <-function(paramList, split_condition){
+  
+  ##############  Return parse structure   ##############
+  parseStruct <- list(params = paramList, parsePhrase = split_condition)
+  return(parseStruct)
 }
 
 parse_struct_resolve <- function(parse_struct){
@@ -117,23 +238,23 @@ set_param <- function(df_list, source_name, id_colname, id, data_type){
   if (!(source_name %in% names(df_list))){
     stop("source_name needs to be one of the following strings: ", sprintf("%s; ", names(df_list)))
   }
-  
+
   df <- df_list[[source_name]]
   if (!(id_colname %in% names(df))){
     stop("id_colname needs to be set to the column name describing the rowname entries in data.frame 'df_list[[source_name]]'")
   }
-  
+
   ids <- df[[id_colname]]
   if (!(id %in% ids)){
     stop("id not found within id_column")
   }
-  
+
   if (!(data_type %in% data_types)){
     stop("data_types need to be either 'numeric' or 'character'")
   }
-  
+
   i <- which(ids == id)
-  
+
   if (length(i) > 1){
     stop("Multiple entries found for id. Make sure that 'id_colname' is set correctly")
   }
@@ -150,10 +271,10 @@ select_output_sources <- function(input_data_sources, source_name_subset, output
   }
   I <- !is.na(match(input_data_sources$source_names, source_name_subset))
   output_data_sources <- input_data_sources[I,]
-  
+
   num_sources <- length(source_name_subset)
   for (si in 1:num_sources){
-    dotsplits <- strsplit(x = output_data_sources$file_names[si], split = ".", fixed = TRUE)[[1]] 
+    dotsplits <- strsplit(x = output_data_sources$file_names[si], split = ".", fixed = TRUE)[[1]]
     if (length(dotsplits) == 1){
       output_file <- paste(dotsplits, output_file_type, sep = "")
     } else {
@@ -162,7 +283,7 @@ select_output_sources <- function(input_data_sources, source_name_subset, output
     }
     output_data_sources$file_names[si] <- output_file
   }
-  
+
   return(output_data_sources)
 }
 

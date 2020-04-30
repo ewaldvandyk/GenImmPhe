@@ -1,4 +1,6 @@
-source("./utility/io_evd.R")
+genImmPhe_path <- getwd()
+source(file.path(genImmPhe_path, "utility/io_evd.R"), local = TRUE)
+
 get_genes_with_pathway_term <- function(pathFile = "~/data/pathways/CTD_genes_pathways.tsv", 
                                         terms = c("AKT", "PI3K", "PIK3CA", "MTOR")){
   pathDF <- load_tsv(inFile = pathFile)

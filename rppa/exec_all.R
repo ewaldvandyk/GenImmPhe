@@ -1,3 +1,4 @@
+setwd("~/devel/R/GenImmPhe/")
 source("./utility/io_evd.R")
 source("./rppa/rppa_preproc.R")
 

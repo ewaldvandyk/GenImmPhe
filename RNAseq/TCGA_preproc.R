@@ -1,4 +1,5 @@
-source("./utility/tcga_proc.R")
+genImmPhe_path <- getwd()
+source(file.path(genImmPhe_path, "utility/tcga_proc.R"), local = TRUE)
 
 gdc_TCGA_2_rnaSeqraw <-function(gdc_inDir, sampFile) {
   

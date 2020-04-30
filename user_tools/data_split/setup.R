@@ -1,4 +1,5 @@
-source("./user_tools/data_split/split_methods.R", local = TRUE)
+genImmPhe_path <- getwd()
+source(file.path(genImmPhe_path, "user_tools/data_split/split_methods.R"), local = TRUE)
 
 setup_data_sources <- function(){
   input_dir <- "~/data/pipeline_interm/2019_05_TCGA_BRCA"
@@ -43,8 +44,7 @@ setup_data_sources <- function(){
   return(data_sources)
 }
 
-
-setup_split <-function(df_list){
+setup_TCGA_default_params <- function(df_list){
   paramList <- list()
   
   ##############  Setup parameters to use in logical expression   ##############
@@ -61,24 +61,27 @@ setup_split <-function(df_list){
                                        id_colname = "mutation_names", id = "PIK3CA_p.E545K", 
                                        data_type = "numeric")
   paramList$PIK3CA_H1047R <- set_param(df_list = df_list, source_name = "MUTATIONS",
-                                          id_colname = "mutation_names", id = "PIK3CA_p.H1047R", 
-                                          data_type = "numeric")
-  paramList$PIK3CA_nonsilent  <- set_param(df_list = df_list, source_name = "MUTATIONS", 
-                                       id_colname = "mutation_names", id = "PIK3CA_nonsilent", 
+                                       id_colname = "mutation_names", id = "PIK3CA_p.H1047R", 
                                        data_type = "numeric")
+  paramList$PIK3CA_nonsilent  <- set_param(df_list = df_list, source_name = "MUTATIONS", 
+                                           id_colname = "mutation_names", id = "PIK3CA_nonsilent", 
+                                           data_type = "numeric")
   paramList$AKT1_E17K     <- set_param(df_list = df_list, source_name = "MUTATIONS",
                                        id_colname = "mutation_names", id = "AKT1_p.E17K", 
                                        data_type = "numeric")
   paramList$AKT1_nonsilent  <- set_param(df_list = df_list, source_name = "MUTATIONS", 
-                                           id_colname = "mutation_names", id = "AKT1_nonsilent", 
-                                           data_type = "numeric")
+                                         id_colname = "mutation_names", id = "AKT1_nonsilent", 
+                                         data_type = "numeric")
   paramList$PTEN_nonsilent <- set_param(df_list = df_list, source_name = "MUTATIONS",
-                                       id_colname = "mutation_names", id = "PTEN_nonsilent", 
-                                       data_type = "numeric")
+                                        id_colname = "mutation_names", id = "PTEN_nonsilent", 
+                                        data_type = "numeric")
   paramList$PTEN_CNA      <- set_param(df_list = df_list, source_name = "CNAS",
                                        id_colname = "hgnc_symbol", id = "PTEN",
                                        data_type = "numeric")
-  
+  return(paramList)
+}
+
+setup_TCGA_default_splits <- function(){
   ##############  Set logical expression ##############
   # Basic unary relations
   # is.na(<x>)  : is NA value
@@ -110,15 +113,11 @@ setup_split <-function(df_list){
   split$lumA_pten_nonsilent <- "LUMA >= 0.5 && PTEN_nonsilent == 1"
   # Example 5: Choose all luminal A samples with copy number loss in PTEN
   split$lumA_pten_loss <- "LUMA >= 0.5 && PTEN_CNA <= -0.25"
-  
-  
-  ##############  Set logical expression   ##############
-  split_condition <- split$lumA_pten_loss
-  
-  ##############  Return parse structure   ##############
-  parseStruct <- list(params = paramList, parsePhrase = split_condition)
-  return(parseStruct)
+  return(split)
 }
+
+
+
 
 
 

@@ -1,4 +1,5 @@
-source("./utility/data_transform.R")
+genImmPhe_path <- getwd()
+source(file.path(genImmPhe_path, "utility/data_transform.R"), local = TRUE)
 
 allignDFs <- function(df_list, nonDataFieldNames, NAsAllowed = 1:length(df_list)){
   # NAsAllowed is vector of list indexes showing which data frames are allowed to have NA columns 

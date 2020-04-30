@@ -1,5 +1,6 @@
-source("./utility/io_evd.R")
-source("./utility/tcga_proc.R")
+genImmPhe_path <- getwd()
+source(file.path(genImmPhe_path, "utility/io_evd.R"), local = TRUE)
+source(file.path(genImmPhe_path, "utility/tcga_proc.R"), local = TRUE)
 
 download_maf <- function(tumor = "BRCA", downloadDir = NULL, 
                          pipelines = c("mutect2", "muse", "varscan2", "somaticsniper")){

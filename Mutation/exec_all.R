@@ -1,3 +1,4 @@
+setwd("~/devel/R/GenImmPhe/")
 source("./utility/io_evd.R")
 source("./Mutation/TCGA_preproc.R")
 source("./Mutation/mut_proc.R")

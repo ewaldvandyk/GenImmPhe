@@ -1,3 +1,4 @@
+setwd("~/devel/R/GenImmPhe")
 source("./utility/plot_scripts.R")
 source("./data_integration/df_processing.R")
 

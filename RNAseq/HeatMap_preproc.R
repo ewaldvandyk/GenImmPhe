@@ -1,6 +1,3 @@
-# require(gdata)
-
-
 
 genHeatMap <- function(df, dataCols, rowNameField){
   df_data <- df[,dataCols]

@@ -1,7 +1,8 @@
-source("./user_tools/heatmap/heatmap_methods.R", local = TRUE)
+genImmPhe_path <- getwd()
+source(file.path(genImmPhe_path,"user_tools/heatmap/heatmap_methods.R"), local = TRUE)
 
 setup_data_sources <- function(cluster_ids = NULL){
-  input_dir <- "/Volumes/Ewald/Antoinette/TCGA/lumA_pten_nonsilent/"
+  input_dir <- "~/data/pipeline_interm/2019_05_TCGA_BRCA"
   output_dir <- file.path(input_dir, "plots") #"~/temp/plots/" 
   input_data_sources  <- 
     data.frame(source_names = 
@@ -10,10 +11,10 @@ setup_data_sources <- function(cluster_ids = NULL){
                    "CNAS",
                    "RPPA"),
                file_names = 
-                 c("molecular_subtypes.tsv",
-                   "mut_pik_akt_pten.tsv",
-                   "cna_pten.tsv",
-                   "rppa_pi3k.tsv"), 
+                 c("molecular_subtypes.Rda",
+                   "mut_pik_akt_pten.Rda",
+                   "cna_pten.Rda",
+                   "rppa_pi3k.Rda"), 
                field_ids = 
                  c("molecular_subtype",
                    "mutation_names",

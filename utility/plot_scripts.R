@@ -1,5 +1,7 @@
 library(heatmap3)
-source("./utility/data_transform.R")
+
+genImmPhe_path <- getwd()
+source(file.path(genImmPhe_path, "utility/data_transform.R"), local = TRUE)
 
 genHeatMap <- function(df, rownameField = NULL, dataFields = NULL,
                        colPallet = gen3ColPallet(nCol = 1024, satLeft = 0.45, satRight = 0.55),

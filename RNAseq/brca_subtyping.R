@@ -1,7 +1,9 @@
 library(genefu)
 library(varhandle)
 library(caret)
-source("./RNAseq/TCGA_preproc.R")
+
+genImmPhe_path <- getwd()
+source(file.path(genImmPhe_path, "RNAseq/TCGA_preproc.R"), local = TRUE)
 
 train_brca_pam50 <- function(countDF, colIgnore = 1:4, ensg_col = "ensembl_gene_id", entrez_col = "entrezgene"){
   map_cluster2molSubtype <- function(clusterVec, subtypeMap){

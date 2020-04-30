@@ -1,3 +1,4 @@
+setwd("~/devel/R/GenImmPhe")
 source("./cna/cna_preproc.R")
 
 ####################### CNA #######################
