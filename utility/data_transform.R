@@ -7,7 +7,7 @@ transpose_df <- function(df, rowNameCol, colTypeName = "row_name"){
   rownames(df) <- rowNames
   tMat <- t(df)
 
-  t_df <- data.frame(tMat, stringsAsFactors = FALSE)
+  t_df <- data.frame(tMat, stringsAsFactors = FALSE, check.names = FALSE)
   t_df[[colTypeName]] <- rownames(tMat)
   t_df <- t_df[, c(ncol(t_df), 1:(ncol(t_df)-1))]
   return(t_df)

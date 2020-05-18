@@ -45,3 +45,21 @@ get_file_base <- function(fileList){
   }
   return(baseList)
 }
+
+convertOldRda2NewRdaFormat <- function(inDir, outDir){
+# Previous versions of data directories containing Rda files are not supported by latest version.
+# This function converts old directories to new format. Make sure outDir exists
+  if (inDir == outDir){
+    stop("inDir cannot be the same as outDir")
+  }
+  a <- dir(inDir)
+  for (fileName in a){
+    currInFile  <- file.path(inDir, fileName)
+    currOutFile <- file.path(outDir, fileName)
+    dfName <- load(currInFile)
+    dfUse <- get(dfName)
+    saveRDS(object = dfUse, file = currOutFile)
+  }
+  invisible(outDir)
+}
+

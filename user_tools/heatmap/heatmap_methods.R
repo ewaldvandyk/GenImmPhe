@@ -9,7 +9,13 @@ load_df_list <- function(data_sources){
   df_list <- list()
   non_data_fields <- c()
   for (dfi in seq_along(data_sources$input_data_sources$source_names)){
-    currDF <- load_tsv(file.path(data_sources$input_dir, data_sources$input_data_sources$file_names[dfi]))
+    currDfFile <- file.path(data_sources$input_dir, data_sources$input_data_sources$file_names[dfi])
+    currDfExt <- tools::file_ext(currDfFile)
+    if (currDfExt == "Rda"){
+      currDF <- readRDS(currDfFile)
+    } else if ((currDfExt == "tsv") || (currDfExt == "txt")){
+      currDF <- load_tsv(currDfFile)  
+    }
     keepI <- map_lgl(currDF, function(x) sum(is.na(x)) != length(x))
     currDF <- currDF[,keepI]
     df_list[[data_sources$input_data_sources$source_names[dfi]]] <- currDF
@@ -81,7 +87,7 @@ set_sideSamp <- function(df_list , source_name,
   
 }
 
-create_heatmap <- function(df_list, sideSampList, data_sources){
+create_heatmap <- function(df_list, sideSampList, data_sources, colPallet = NULL, ...){
   numSources <- length(df_list)
   if (numSources == 0){
     stop("No data source specified")
@@ -109,9 +115,9 @@ create_heatmap <- function(df_list, sideSampList, data_sources){
     heatmapFileName <- sprintf("heatmap_%s_%s", data_sources$heatmap_source$source_name, data_sources$heatmap_source$tag)
     jpeg(file.path(data_sources$output_dir, paste0(heatmapFileName, ".jpg")), width = 210, height = 297,units = "mm", res = 72*4)
   }
-  str(heatmapDF)
+  # str(heatmapDF)
   heatData <- genHeatMap(df = heatmapDF, rownameField = data_sources$heatmap_source$id_colname, dataFields = samp_names, 
-             colSideAnn = colSideAnn)
+             colSideAnn = colSideAnn, colPallet, ...)
   if (!is.null(data_sources$output_dir)){
     dev.off()
   }

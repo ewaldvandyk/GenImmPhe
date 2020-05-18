@@ -4,10 +4,12 @@ genImmPhe_path <- getwd()
 source(file.path(genImmPhe_path, "utility/data_transform.R"), local = TRUE)
 
 genHeatMap <- function(df, rownameField = NULL, dataFields = NULL,
-                       colPallet = gen3ColPallet(nCol = 1024, satLeft = 0.45, satRight = 0.55),
+                       colPallet = NULL,
                        colSideAnn = NULL, 
-                       maxRowSizeToLabel = 40, maxColSizeToLabel = 40){
-  
+                       maxRowSizeToLabel = 40, maxColSizeToLabel = 40, ...){
+  if (is.null(colPallet)){
+    colPallet <- gen3ColPallet(nCol = 1024, satLeft = 0.3, satRight = 0.7)
+  }
   numRows <- nrow(df)
   if (is.null(dataFields)){
     dataFields <- colnames(df)[get_df_numeric_colI(df)]
@@ -41,15 +43,15 @@ genHeatMap <- function(df, rownameField = NULL, dataFields = NULL,
    clustRes <- heatmap3(x = dataMat,
              balanceColor = TRUE, showColDendro = TRUE,
              showRowDendro = TRUE, col=colPallet, labRow = labRow, labCol = labCol, 
-             na.rm = TRUE)
+             na.rm = TRUE, ...)
     
   } else {
     clustRes <- heatmap3(x = dataMat, 
-             showColDendro = TRUE, showRowDendro = TRUE, 
+             showColDendro = TRUE, showRowDendro = TRUE,
              labRow = labRow, labCol = labCol,
              balanceColor = TRUE, col=colPallet, 
              ColSideAnn = colSideAnn, ColSideFun = showColSideCols, ColSideWidth = getColSideColStripLength(colSideAnn),
-             na.rm = TRUE)
+             na.rm = TRUE, ...)
     
   }
   

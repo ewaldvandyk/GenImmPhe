@@ -2,7 +2,7 @@ genImmPhe_path <- getwd()
 source(file.path(genImmPhe_path,"user_tools/heatmap/heatmap_methods.R"), local = TRUE)
 
 setup_data_sources <- function(cluster_ids = NULL){
-  input_dir <- "~/data/pipeline_interm/2019_05_TCGA_BRCA"
+  input_dir <- "~/data/pipeline_interm/2020_04_TCGA_BRCA/"
   output_dir <- file.path(input_dir, "plots") #"~/temp/plots/" 
   input_data_sources  <- 
     data.frame(source_names = 
