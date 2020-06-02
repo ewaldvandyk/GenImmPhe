@@ -48,8 +48,7 @@ genHeatMap <- function(df, rownameField = NULL, dataFields = NULL,
   } else {
     clustRes <- heatmap3(x = dataMat, 
              showColDendro = TRUE, showRowDendro = TRUE,
-             labRow = labRow, labCol = labCol,
-             balanceColor = TRUE, col=colPallet, 
+             labRow = labRow, labCol = labCol, col=colPallet, 
              ColSideAnn = colSideAnn, ColSideFun = showColSideCols, ColSideWidth = getColSideColStripLength(colSideAnn),
              na.rm = TRUE, ...)
     
@@ -126,6 +125,19 @@ lgl2Color <- function(lglVec, true_color = "red", false_color = "black", na_colo
 num2Color <- function(numVec, low_col = "green", neut_col = "black", high_col = "red", na_color = "grey", 
                     neut_level = 0, saturate_low = -1, saturate_high = +1){
   # Map colors
+  if (is.null(low_col)){
+    low_col = "green"
+  }
+  if (is.null(neut_col)){
+    neut_col = "black"
+  }
+  if (is.null(high_col)){
+    high_col = "red"
+  }
+  if (is.null(na_color)){
+    na_color = "grey"
+  }
+  
   nColors <- 1025
   colScale <- gen3ColPallet(nCol = nColors, lowCol = low_col, midColor = neut_col, highColor = high_col, 
                             satLeft = 0, satRight = 1)

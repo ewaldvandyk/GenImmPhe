@@ -41,7 +41,7 @@ load_df_list <- function(data_sources){
 
 set_sideSamp <- function(df_list , source_name,
                          id_colname, id,
-                         data_type = NA, zero_ref = "median",  saturation_frac = 0.05){
+                         data_type = NA, zero_ref = "median",  saturation_frac = 0.05, lowColor=NULL, highColor=NULL){
   
   zero_ref_choices <- c("median", "mean")
   data_type_choices <- c("numeric", "logical", "factor")
@@ -82,6 +82,8 @@ set_sideSamp <- function(df_list , source_name,
   info$transform$type <- data_type
   info$transform$zero_ref <- zero_ref
   info$transform$saturation_frac <- saturation_frac
+  info$transform$lowColor <- lowColor
+  info$transform$lowColor <- highColor
   return(info)
   
   
