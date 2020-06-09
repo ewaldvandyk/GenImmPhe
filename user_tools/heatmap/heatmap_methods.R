@@ -41,7 +41,7 @@ load_df_list <- function(data_sources){
 
 set_sideSamp <- function(df_list , source_name,
                          id_colname, id,
-                         data_type = NA, zero_ref = "median",  saturation_frac = 0.05, lowColor=NULL, highColor=NULL){
+                         data_type = NA, zero_ref = "median",  saturation_frac = 0.05, lowColor=NULL, highColor=NULL, firstLevel=NULL){
   
   zero_ref_choices <- c("median", "mean")
   data_type_choices <- c("numeric", "logical", "factor")
@@ -84,6 +84,7 @@ set_sideSamp <- function(df_list , source_name,
   info$transform$saturation_frac <- saturation_frac
   info$transform$lowColor <- lowColor
   info$transform$lowColor <- highColor
+  info$transform$firstLevel <- firstLevel
   return(info)
   
   
@@ -149,6 +150,9 @@ getSideAnnVec <- function(df_list, samp_names, sideSampInfo){
   dfSlice <- sourceDF[sideSampInfo$location$idi, samp_names]
   if (sideSampInfo$transform$type == "factor"){
     vec <- factor(map_chr(dfSlice, as.character))
+    if (!is.null(sideSampInfo$transform$firstLevel)){
+      vec <- relevel(x = vec, ref = sideSampInfo$transform$firstLevel)  
+    }
   } else if (sideSampInfo$transform$type == "logical"){
     vec <- map_lgl(dfSlice, as.logical)
   } else if (sideSampInfo$transform$type == "numeric"){
