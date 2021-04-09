@@ -83,7 +83,7 @@ set_sideSamp <- function(df_list , source_name,
   info$transform$zero_ref <- zero_ref
   info$transform$saturation_frac <- saturation_frac
   info$transform$lowColor <- lowColor
-  info$transform$lowColor <- highColor
+  info$transform$highColor <- highColor
   info$transform$firstLevel <- firstLevel
   return(info)
   
@@ -158,9 +158,9 @@ getSideAnnVec <- function(df_list, samp_names, sideSampInfo){
   } else if (sideSampInfo$transform$type == "numeric"){
     vec <- map_dbl(dfSlice, as.numeric)
     if (sideSampInfo$transform$zero_ref == "mean"){
-      zero_ref <- mean(vec)
+      zero_ref <- mean(vec, na.rm = T)
     } else if (sideSampInfo$transform$zero_ref == "median"){
-      zero_ref <- median(vec)
+      zero_ref <- median(vec, na.rm = T)
     } else{
       zero_ref <- sideSampInfo$transform$zero_ref
     }
