@@ -47,9 +47,10 @@ genHeatMap <- function(df, rownameField = NULL, dataFields = NULL,
     
   } else {
     clustRes <- heatmap3(x = dataMat, 
-             showColDendro = TRUE, showRowDendro = TRUE,
+             showColDendro = TRUE, showRowDendro = TRUE, keep.dendro = TRUE,
              labRow = labRow, labCol = labCol, col=colPallet, 
-             ColSideAnn = colSideAnn, ColSideFun = showColSideCols, ColSideWidth = getColSideColStripLength(colSideAnn),
+             ColSideAnn = colSideAnn, ColSideFun = function(annData) showColSideColsV2(annData, colPallet = colPallet), 
+             ColSideWidth = getColSideColStripLength(colSideAnn),
              na.rm = TRUE, ...)
     
   }
@@ -160,6 +161,39 @@ num2Color <- function(numVec, low_col = "green", neut_col = "black", high_col = 
   
   colVec <- colScale[valiVec]
 }
+num2ColorV2 <- function(numVec, colPallet=NULL, na_color = NULL, 
+                      neut_level = 0, saturate_low = -1, saturate_high = +1){
+ 
+  
+  
+  if (is.null(colPallet)){
+    colPallet <- gen3ColPallet()
+  }
+  nColors <- length(colPallet)
+  
+  if (is.null(na_color)){
+    na_color = colPallet[[round(nColors/2)]]
+  }
+  
+  na_code <- colorRampPalette(na_color)(1)
+  colPallet <- c(colPallet, na_code)
+  
+  naI <- is.na(numVec)
+  lowI <- !is.na(numVec) & numVec <= neut_level
+  satLowI <- !is.na(numVec) & numVec < saturate_low
+  higI <- !is.na(numVec) & numVec > neut_level
+  satHighI <- !is.na(numVec) & numVec > saturate_high
+  
+  valiVec <- rep(0, length(numVec))
+  valiVec[lowI] <- (numVec[lowI] - saturate_low) / (neut_level - saturate_low) * (nColors-1)/2 + 1
+  valiVec[higI] <- (numVec[higI] - neut_level) / (saturate_high - neut_level) * (nColors-1)/2 + (nColors-1)/2 + 1
+  valiVec[satLowI] <- 1
+  valiVec[satHighI] <- nColors
+  valiVec[naI] <- nColors+1
+  valiVec <- round(valiVec)
+  
+  colVec <- colPallet[valiVec]
+}
 
 fac2Color <- function(facVec, brewer_pal = "Set1", na_color = "grey"){
   require(RColorBrewer)
@@ -223,6 +257,95 @@ showColSideCols <- function(annData){
           text = sprintf("%s ", colnames(dataNum)), las = 1)
     for (numVec in dataNum){
       colorVec <- num2Color(numVec)
+      rect(xleft = xleft, xright = xright, ybottom = offset, ytop = offset+1, col = colorVec, border = colorVec)
+      lines(x = c(LeftBound, RightBound), y = c(offset+1, offset+1))
+      offset <- offset + 1
+    }
+  }
+  
+  legLeft <- 1/20
+  legColFrac <- 0.5
+  legColHight <- 0.5
+  legxBias <- -0.1*legLeft
+  legyBias <- -0.1
+  
+  legColWidth <- legLeft*legColFrac
+  legLeftWidth <- legLeft - legColWidth
+  legColHightRes <- (1 - legColHight)/2
+  
+  if (ncol(dataFac) != 0){
+    mtext(side = 2, at = 2*seq_along(dataFac) + offset - 1,
+          text = sprintf("%s ", colnames(dataFac)), las = 1)
+    for (facVec in dataFac){
+      pal_info <- fac2Color(facVec)
+      colorVec <- pal_info$colorVec
+      legColVec <- pal_info$levelColors
+      rect(xleft = xleft, xright = xright, ybottom = offset, ytop = offset+1, col = colorVec, border = colorVec)
+      levelNames <- levels(facVec)
+      numLevels <- length(levelNames)
+      FacWidth <- 1.0 / numLevels
+      xLegTextPos <- (seq_along(levelNames)-1)*FacWidth + legColWidth +legLeftWidth
+      yLegTextPos <- rep(x = offset + 1.5, times = numLevels)
+      xLegLeft <- xLegTextPos - legColWidth + legxBias
+      xLegRight <- xLegTextPos + legxBias
+      yLegBottom <- yLegTextPos - legColHightRes + legyBias
+      yLegTop <- yLegTextPos + legColHightRes + legyBias
+      text(x = xLegTextPos, y = yLegTextPos, labels = levelNames, adj = 0)
+      rect(xleft = xLegLeft, xright = xLegRight, ybottom = yLegBottom, ytop = yLegTop, col = legColVec, border = NA)
+      
+      lines(x = c(LeftBound, RightBound), y = c(offset+2, offset+2))
+      offset <- offset + 2
+    }
+  }
+  
+  # offset <- numLines
+  return(c(0.0, offset))
+}
+
+showColSideColsV2 <- function(annData, colPallet=NULL){
+  require(purrr)
+  fieldTypes <- map_chr(.x = annData, .f = class)
+  lglI <- fieldTypes == "logical"
+  numI <- fieldTypes == "numeric"
+  facI <- fieldTypes == "factor"
+  
+  dataLgl <- annData[,lglI, drop = FALSE]
+  dataNum <- annData[,numI, drop = FALSE]
+  dataFac <- annData[,facI, drop = FALSE]
+  
+  binWidth <- 1/nrow(annData)
+  halfBinWidth <- binWidth/2
+  LeftBound <- -halfBinWidth
+  RightBound <- 1 + halfBinWidth 
+  
+  numLines <- ncol(dataLgl) + ncol(dataNum) + 2*ncol(dataFac)
+  plot(c(LeftBound, RightBound), c(0, numLines), 
+       type = "n", xaxt = "n", yaxt = "n", xlab = "", 
+       ylab = "", bty = "n", axes = FALSE, xaxs = "i")
+  lines(x = c(LeftBound, LeftBound, RightBound, RightBound, LeftBound), 
+        y = c(0, numLines, numLines, 0, 0))
+  
+  xleft <- seq(from = LeftBound, to = 1-halfBinWidth, length.out = nrow(annData))
+  xright <- xleft + binWidth
+  
+  offset <- 0
+  if (ncol(dataLgl) != 0){
+    mtext(side = 2, at = seq_along(dataLgl) + offset - 0.5, 
+          text = sprintf("%s ", colnames(dataLgl)), las = 1)
+    for (lglVec in dataLgl){
+      colorVec <- lgl2Color(lglVec)
+      
+      rect(xleft = xleft, xright = xright, ybottom = offset, ytop = offset+1, col = colorVec, border = colorVec)
+      lines(x = c(LeftBound, RightBound), y = c(offset+1, offset+1))
+      offset <- offset+1
+    }
+  }
+  
+  if (ncol(dataNum) != 0){
+    mtext(side = 2, at = seq_along(dataNum) + offset - 0.5,
+          text = sprintf("%s ", colnames(dataNum)), las = 1)
+    for (numVec in dataNum){
+      colorVec <- num2ColorV2(numVec, colPallet=colPallet)
       rect(xleft = xleft, xright = xright, ybottom = offset, ytop = offset+1, col = colorVec, border = colorVec)
       lines(x = c(LeftBound, RightBound), y = c(offset+1, offset+1))
       offset <- offset + 1

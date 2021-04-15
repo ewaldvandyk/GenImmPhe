@@ -41,7 +41,7 @@ load_df_list <- function(data_sources){
 
 set_sideSamp <- function(df_list , source_name,
                          id_colname, id,
-                         data_type = NA, zero_ref = "median",  saturation_frac = 0.05, lowColor=NULL, highColor=NULL, firstLevel=NULL){
+                         data_type = NA, zero_ref = "median", colPallet = NULL, saturation_frac = 0.0, lowColor=NULL, highColor=NULL, firstLevel=NULL){
   
   zero_ref_choices <- c("median", "mean")
   data_type_choices <- c("numeric", "logical", "factor")
@@ -81,6 +81,7 @@ set_sideSamp <- function(df_list , source_name,
   info$location$idi <- i
   info$transform$type <- data_type
   info$transform$zero_ref <- zero_ref
+  info$transform$colPallet = colPallet
   info$transform$saturation_frac <- saturation_frac
   info$transform$lowColor <- lowColor
   info$transform$highColor <- highColor
@@ -167,13 +168,15 @@ getSideAnnVec <- function(df_list, samp_names, sideSampInfo){
     vecSort <- sort(x = vec, decreasing = FALSE, na.last = NA)
     leftMax <- max(vecSort[vecSort < zero_ref])
     rightMin <- min(vecSort[vecSort > zero_ref])
-    leftSat <- vecSort[round(length(vecSort)*sideSampInfo$transform$saturation_frac/2)]
+    leftSat <- vecSort[max(round(length(vecSort)*sideSampInfo$transform$saturation_frac/2),1)]
     rightSat <- vecSort[round(length(vecSort)*(1-sideSampInfo$transform$saturation_frac/2))]
     leftSat <- min(leftMax, leftSat) - zero_ref
     rightSat <- max(rightMin, rightSat) - zero_ref
     vec <- vec - zero_ref
     vec[!is.na(vec) & vec < 0] <- -vec[!is.na(vec) & vec < 0]/leftSat
     vec[!is.na(vec) & vec > 0] <- vec[!is.na(vec) & vec > 0]/rightSat
+    attr(vec, "colPallet") <- sideSampInfo$transform$colPallet
+
   }
   
   return(vec)
