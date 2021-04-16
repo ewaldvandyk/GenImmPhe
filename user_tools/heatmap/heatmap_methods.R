@@ -1,3 +1,5 @@
+library(sticky)
+
 genImmPhe_path <- getwd()
 source(file.path(genImmPhe_path, "utility/io_evd.R"), local = TRUE)
 source(file.path(genImmPhe_path, "utility/plot_scripts.R"), local = TRUE)
@@ -114,6 +116,7 @@ create_heatmap <- function(df_list, sideSampList, data_sources, colPallet = NULL
   dataCols <- samp_names
   
   colSideAnn <- df_list2sideAnn(df_list, samp_names, sideSampList)
+
   if (!is.null(data_sources$output_dir)){
     dir.create(data_sources$output_dir, showWarnings = FALSE)
     heatmapFileName <- sprintf("heatmap_%s_%s", data_sources$heatmap_source$source_name, data_sources$heatmap_source$tag)
@@ -179,5 +182,5 @@ getSideAnnVec <- function(df_list, samp_names, sideSampInfo){
 
   }
   
-  return(vec)
+  return(sticky(vec))
 }

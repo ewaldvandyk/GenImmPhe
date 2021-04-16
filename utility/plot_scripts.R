@@ -6,7 +6,7 @@ source(file.path(genImmPhe_path, "utility/data_transform.R"), local = TRUE)
 genHeatMap <- function(df, rownameField = NULL, dataFields = NULL,
                        colPallet = NULL,
                        colSideAnn = NULL, 
-                       maxRowSizeToLabel = 40, maxColSizeToLabel = 40, ...){
+                       maxRowSizeToLabel = 40, maxColSizeToLabel = 40, bg_col = NULL, ...){
   if (is.null(colPallet)){
     colPallet <- gen3ColPallet(nCol = 1024, satLeft = 0.3, satRight = 0.7)
   }
@@ -39,6 +39,12 @@ genHeatMap <- function(df, rownameField = NULL, dataFields = NULL,
   
   # str(colSideAnn)
   # str(dataMat)
+  if (!is.null(bg_col)){
+    oldBgColor <- par("bg")
+    par(bg = bg_col)
+    on.exit(par(bg = oldBgColor), add = T, after = F)
+  }
+  
   if (is.null(colSideAnn)){
    clustRes <- heatmap3(x = dataMat,
              balanceColor = TRUE, showColDendro = TRUE,
@@ -215,7 +221,7 @@ fac2Color <- function(facVec, brewer_pal = "Set1", na_color = "grey"){
 
 showColSideCols <- function(annData){
   require(purrr)
-  fieldTypes <- map_chr(.x = annData, .f = class)
+  fieldTypes <- map_chr(.x = annData, .f = function(x) class(x)[[length(class(x))]])
   lglI <- fieldTypes == "logical"
   numI <- fieldTypes == "numeric"
   facI <- fieldTypes == "factor"
@@ -304,7 +310,7 @@ showColSideCols <- function(annData){
 
 showColSideColsV2 <- function(annData, colPallet=NULL){
   require(purrr)
-  fieldTypes <- map_chr(.x = annData, .f = class)
+  fieldTypes <- map_chr(.x = annData, .f = function(x) class(x)[[length(class(x))]])
   lglI <- fieldTypes == "logical"
   numI <- fieldTypes == "numeric"
   facI <- fieldTypes == "factor"
@@ -345,7 +351,12 @@ showColSideColsV2 <- function(annData, colPallet=NULL){
     mtext(side = 2, at = seq_along(dataNum) + offset - 0.5,
           text = sprintf("%s ", colnames(dataNum)), las = 1)
     for (numVec in dataNum){
-      colorVec <- num2ColorV2(numVec, colPallet=colPallet)
+      
+      currPallet <- attr(numVec, "colPallet")
+      if (is.null(currPallet)){
+        currPallet <- colPallet
+      }
+      colorVec <- num2ColorV2(numVec, colPallet=currPallet)
       rect(xleft = xleft, xright = xright, ybottom = offset, ytop = offset+1, col = colorVec, border = colorVec)
       lines(x = c(LeftBound, RightBound), y = c(offset+1, offset+1))
       offset <- offset + 1
@@ -395,7 +406,7 @@ getColSideColStripLength <- function(annData){
   lenMult <- 0.2
   
   require(purrr)
-  fieldTypes <- map_chr(.x = annData, .f = class)
+  fieldTypes <- map_chr(.x = annData, .f = function(x) class(x)[[length(class(x))]])
   lglI <- fieldTypes == "logical"
   numI <- fieldTypes == "numeric"
   facI <- fieldTypes == "factor"
