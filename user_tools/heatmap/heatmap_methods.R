@@ -43,7 +43,7 @@ load_df_list <- function(data_sources){
 
 set_sideSamp <- function(df_list , source_name,
                          id_colname, id,
-                         data_type = NA, zero_ref = "median", colPallet = NULL, saturation_frac = 0.0, lowColor=NULL, highColor=NULL, firstLevel=NULL){
+                         data_type = NA, zero_ref = "median", colPallet = NULL, saturation_frac = 0.0, lowColor=NULL, highColor=NULL, naColor = "black", firstLevel=NULL){
   
   zero_ref_choices <- c("median", "mean")
   data_type_choices <- c("numeric", "logical", "factor")
@@ -87,6 +87,7 @@ set_sideSamp <- function(df_list , source_name,
   info$transform$saturation_frac <- saturation_frac
   info$transform$lowColor <- lowColor
   info$transform$highColor <- highColor
+  info$transform$naColor <- naColor
   info$transform$firstLevel <- firstLevel
   return(info)
   
@@ -181,6 +182,6 @@ getSideAnnVec <- function(df_list, samp_names, sideSampInfo){
     attr(vec, "colPallet") <- sideSampInfo$transform$colPallet
 
   }
-  
+  attr(vec, "naColor") <- sideSampInfo$transform$naColor
   return(sticky(vec))
 }

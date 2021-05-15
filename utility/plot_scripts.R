@@ -20,7 +20,6 @@ genHeatMap <- function(df, rownameField = NULL, dataFields = NULL,
     rowNames <- df[[rownameField]]
   }
   # print(rowNames)
-  
   dataMat <- data.matrix(df[,dataFields])
   rownames(dataMat) <- rowNames
   
@@ -338,8 +337,14 @@ showColSideColsV2 <- function(annData, colPallet=NULL){
   if (ncol(dataLgl) != 0){
     mtext(side = 2, at = seq_along(dataLgl) + offset - 0.5, 
           text = sprintf("%s ", colnames(dataLgl)), las = 1)
+    
     for (lglVec in dataLgl){
-      colorVec <- lgl2Color(lglVec)
+      naColor <- attr(lglVec, "naColor")
+      if (is.null(naColor)){
+        naColor <- "black"
+      }
+      
+      colorVec <- lgl2Color(lglVec, na_color = lglVec)
       
       rect(xleft = xleft, xright = xright, ybottom = offset, ytop = offset+1, col = colorVec, border = colorVec)
       lines(x = c(LeftBound, RightBound), y = c(offset+1, offset+1))
@@ -356,7 +361,12 @@ showColSideColsV2 <- function(annData, colPallet=NULL){
       if (is.null(currPallet)){
         currPallet <- colPallet
       }
-      colorVec <- num2ColorV2(numVec, colPallet=currPallet)
+      naColor <- attr(numVec, "naColor")
+      if (is.null(naColor)){
+        naColor <- "black"
+      }
+      
+      colorVec <- num2ColorV2(numVec, colPallet=currPallet, na_color = naColor)
       rect(xleft = xleft, xright = xright, ybottom = offset, ytop = offset+1, col = colorVec, border = colorVec)
       lines(x = c(LeftBound, RightBound), y = c(offset+1, offset+1))
       offset <- offset + 1
@@ -377,7 +387,12 @@ showColSideColsV2 <- function(annData, colPallet=NULL){
     mtext(side = 2, at = 2*seq_along(dataFac) + offset - 1,
           text = sprintf("%s ", colnames(dataFac)), las = 1)
     for (facVec in dataFac){
-      pal_info <- fac2Color(facVec)
+      naColor <- attr(facVec, "naColor")
+      if (is.null(naColor)){
+        naColor <- "black"
+      }
+      
+      pal_info <- fac2Color(facVec, na_color = naColor)
       colorVec <- pal_info$colorVec
       legColVec <- pal_info$levelColors
       rect(xleft = xleft, xright = xright, ybottom = offset, ytop = offset+1, col = colorVec, border = colorVec)
