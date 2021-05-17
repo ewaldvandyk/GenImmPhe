@@ -405,7 +405,9 @@ showColSideColsV2 <- function(annData, colPallet=NULL){
       xLegRight <- xLegTextPos + legxBias
       yLegBottom <- yLegTextPos - legColHightRes + legyBias
       yLegTop <- yLegTextPos + legColHightRes + legyBias
-      text(x = xLegTextPos, y = yLegTextPos, labels = levelNames, adj = 0)
+      if (length(levelNames) > 0){
+        text(x = xLegTextPos, y = yLegTextPos, labels = levelNames, adj = 0)
+      }
       rect(xleft = xLegLeft, xright = xLegRight, ybottom = yLegBottom, ytop = yLegTop, col = legColVec, border = NA)
       
       lines(x = c(LeftBound, RightBound), y = c(offset+2, offset+2))
