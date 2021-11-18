@@ -47,12 +47,14 @@ genHeatMap <- function(df, rownameField = NULL, dataFields = NULL,
   if (is.null(colSideAnn)){
    clustRes <- heatmap3(x = dataMat,
              balanceColor = TRUE, showColDendro = TRUE,
+             legendfun=function() showLegend(legend=c("Low","High"),col=c(colPallet[[1]],colPallet[[length(colPallet)]]), cex = 3.0),
              showRowDendro = TRUE, col=colPallet, labRow = labRow, labCol = labCol, 
              na.rm = TRUE, ...)
     
   } else {
     clustRes <- heatmap3(x = dataMat, 
              showColDendro = TRUE, showRowDendro = TRUE, keep.dendro = TRUE,
+             legendfun=function() showLegend(legend=c("Low","High"),col=c(colPallet[[1]],colPallet[[length(colPallet)]]), cex = 3.0),
              labRow = labRow, labCol = labCol, col=colPallet, 
              ColSideAnn = colSideAnn, ColSideFun = function(annData) showColSideColsV2(annData, colPallet = colPallet), 
              ColSideWidth = getColSideColStripLength(colSideAnn),
@@ -324,11 +326,9 @@ showColSideColsV2 <- function(annData, colPallet=NULL){
   RightBound <- 1 + halfBinWidth 
   
   numLines <- ncol(dataLgl) + ncol(dataNum) + 2*ncol(dataFac)
-  plot(c(LeftBound, RightBound), c(0, numLines), 
-       type = "n", xaxt = "n", yaxt = "n", xlab = "", 
+  plot(c(LeftBound, RightBound), c(0, numLines),
+       type = "n", xaxt = "n", yaxt = "n", xlab = "",
        ylab = "", bty = "n", axes = FALSE, xaxs = "i")
-  lines(x = c(LeftBound, LeftBound, RightBound, RightBound, LeftBound), 
-        y = c(0, numLines, numLines, 0, 0))
   
   xleft <- seq(from = LeftBound, to = 1-halfBinWidth, length.out = nrow(annData))
   xright <- xleft + binWidth
@@ -336,7 +336,7 @@ showColSideColsV2 <- function(annData, colPallet=NULL){
   offset <- 0
   if (ncol(dataLgl) != 0){
     mtext(side = 2, at = seq_along(dataLgl) + offset - 0.5, 
-          text = sprintf("%s ", colnames(dataLgl)), las = 1)
+          text = sprintf("%s ", colnames(dataLgl)), las = 1, cex = 2)
     
     for (lglVec in dataLgl){
       naColor <- attr(lglVec, "naColor")
@@ -354,7 +354,7 @@ showColSideColsV2 <- function(annData, colPallet=NULL){
   
   if (ncol(dataNum) != 0){
     mtext(side = 2, at = seq_along(dataNum) + offset - 0.5,
-          text = sprintf("%s ", colnames(dataNum)), las = 1)
+          text = sprintf("%s ", colnames(dataNum)), las = 1, cex = 2)
     for (numVec in dataNum){
       
       currPallet <- attr(numVec, "colPallet")
@@ -377,7 +377,7 @@ showColSideColsV2 <- function(annData, colPallet=NULL){
   legColFrac <- 0.5
   legColHight <- 0.5
   legxBias <- -0.1*legLeft
-  legyBias <- -0.1
+  legyBias <- 0
   
   legColWidth <- legLeft*legColFrac
   legLeftWidth <- legLeft - legColWidth
@@ -385,7 +385,7 @@ showColSideColsV2 <- function(annData, colPallet=NULL){
   
   if (ncol(dataFac) != 0){
     mtext(side = 2, at = 2*seq_along(dataFac) + offset - 1,
-          text = sprintf("%s ", colnames(dataFac)), las = 1)
+          text = sprintf("%s ", colnames(dataFac)), las = 1, cex = 2)
     for (facVec in dataFac){
       naColor <- attr(facVec, "naColor")
       if (is.null(naColor)){
@@ -406,7 +406,7 @@ showColSideColsV2 <- function(annData, colPallet=NULL){
       yLegBottom <- yLegTextPos - legColHightRes + legyBias
       yLegTop <- yLegTextPos + legColHightRes + legyBias
       if (length(levelNames) > 0){
-        text(x = xLegTextPos, y = yLegTextPos, labels = levelNames, adj = 0)
+        text(x = xLegTextPos, y = yLegTextPos, labels = levelNames, adj = 0, cex = 2)
       }
       rect(xleft = xLegLeft, xright = xLegRight, ybottom = yLegBottom, ytop = yLegTop, col = legColVec, border = NA)
       
@@ -414,6 +414,8 @@ showColSideColsV2 <- function(annData, colPallet=NULL){
       offset <- offset + 2
     }
   }
+  lines(x = c(LeftBound, LeftBound, RightBound, RightBound, LeftBound), 
+        y = c(0, numLines, numLines, 0, 0))
   
   # offset <- numLines
   return(c(0.0, offset))
